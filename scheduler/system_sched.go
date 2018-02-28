@@ -59,10 +59,12 @@ func (s *SystemScheduler) Process(eval *structs.Evaluation) error {
 	s.eval = eval
 
 	// Verify the evaluation trigger reason is understood
+	s.logger.Printf("[DEBUG] worker: process eval: %v", eval.TriggeredBy)
+
 	switch eval.TriggeredBy {
 	case structs.EvalTriggerJobRegister, structs.EvalTriggerNodeUpdate,
 		structs.EvalTriggerJobDeregister, structs.EvalTriggerRollingUpdate,
-		structs.EvalTriggerDeploymentWatcher:
+		structs.EvalTriggerDeploymentWatcher, structs.EvalTriggerPeriodicJob:
 	default:
 		desc := fmt.Sprintf("scheduler cannot handle '%s' evaluation reason",
 			eval.TriggeredBy)
@@ -96,6 +98,21 @@ func (s *SystemScheduler) process() (bool, error) {
 		return false, fmt.Errorf("failed to get job '%s': %v",
 			s.eval.JobID, err)
 	}
+
+	// If the job has a parent, see if it is a periodic job, if
+	// so the child shoud be dispatched as a batch job
+	if s.job.ParentID != "" {
+		parent, err := s.state.JobByID(ws, s.eval.Namespace, s.job.ParentID)
+		if err != nil {
+			return false, fmt.Errorf("failed to get parent job '%s': %v",
+				s.job.ParentID, err)
+		}
+
+		if parent.IsPeriodic() && parent.Periodic.Enabled {
+			s.job.Type = "batch"
+		}
+	}
+
 	numTaskGroups := 0
 	if !s.job.Stopped() {
 		numTaskGroups = len(s.job.TaskGroups)
