@@ -133,6 +133,10 @@ type Config struct {
 
 	// Autopilot contains the configuration for Autopilot behavior.
 	Autopilot *config.AutopilotConfig `mapstructure:"autopilot"`
+
+	// DisableUi is used to disable the built-in web user-interface.
+	// Defaults to false.
+	DisableUi bool `mapstructure:"disable_ui"`
 }
 
 // ClientConfig is configuration specific to the client mode
@@ -569,6 +573,7 @@ func DevConfig() *Config {
 	conf.Telemetry.PrometheusMetrics = true
 	conf.Telemetry.PublishAllocationMetrics = true
 	conf.Telemetry.PublishNodeMetrics = true
+	conf.DisableUi = false
 
 	return conf
 }
@@ -624,6 +629,7 @@ func DefaultConfig() *Config {
 		Version:            version.GetVersion(),
 		Autopilot:          config.DefaultAutopilotConfig(),
 		DisableUpdateCheck: helper.BoolToPtr(false),
+		DisableUi:          false,
 	}
 }
 
@@ -798,6 +804,11 @@ func (c *Config) Merge(b *Config) *Config {
 	}
 	for k, v := range b.HTTPAPIResponseHeaders {
 		result.HTTPAPIResponseHeaders[k] = v
+	}
+
+	// Merge UI setting
+	if b.DisableUi {
+		result.DisableUi = true
 	}
 
 	return &result

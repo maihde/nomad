@@ -101,6 +101,7 @@ func parseConfig(result *Config, list *ast.ObjectList) error {
 		"acl",
 		"sentinel",
 		"autopilot",
+		"disable_ui",
 	}
 	if err := helper.CheckHCLKeys(list, valid); err != nil {
 		return multierror.Prefix(err, "config:")
