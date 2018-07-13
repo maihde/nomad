@@ -60,9 +60,9 @@ defaults by job type:
 
     ```hcl
     restart {
-      attempts = 15
+      attempts = 3
       delay    = "15s"
-      interval = "168h"
+      interval = "24h"
       mode     = "fail"
     }
     ```
@@ -71,7 +71,7 @@ defaults by job type:
 
     ```hcl
     restart {
-      interval = "1m"
+      interval = "30m"
       attempts = 2
       delay    = "15s"
       mode     = "fail"
